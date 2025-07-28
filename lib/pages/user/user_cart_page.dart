@@ -1,5 +1,7 @@
 // ignore_for_file: use_build_context_synchronously, avoid_print
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:emregalerimobile/services/card_service.dart';
 import 'package:http/http.dart' as http;
@@ -7,6 +9,8 @@ import 'dart:convert';
 import 'package:emregalerimobile/services/api.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:emregalerimobile/services/signalr_service.dart';
+import 'package:flutter/foundation.dart';
+
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key});
@@ -21,21 +25,51 @@ class _CartPageState extends State<CartPage> {
   DateTime? endDate;
   bool isLoading = false;
   String? token;
+  Timer? _refreshTimer;
+
 
   late SignalRService signalRService;
   Set<int> lockedCarIds = {}; // Kilitlenen araçlar
 
-  @override
-  void initState() {
-    super.initState();
-    loadTokenAndCart();
-  }
+@override
+void initState() {
+  super.initState();
+  loadTokenAndCart();
 
-  @override
-  void dispose() {
-    signalRService.stopConnection();
-    super.dispose();
+  // Her 15 saniyede bir SignalR üzerinden kilitli araçları kontrol et
+  _refreshTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
+    await _refreshLockedCars();
+  });
+}
+
+
+@override
+void dispose() {
+  _refreshTimer?.cancel(); // Timer durduruluyor
+  signalRService.stopConnection(); 
+  super.dispose();
+}
+
+Future<void> _refreshLockedCars() async {
+  if (signalRService.connectionStarted) {
+    Set<int> updatedLockedIds = {};
+
+    for (var item in items) {
+      bool available = await signalRService.checkIfCarAvailable(item.carId);
+      if (!available) {
+        updatedLockedIds.add(item.carId);
+      }
+    }
+
+    if (!setEquals(updatedLockedIds, lockedCarIds)) {
+      setState(() {
+        lockedCarIds = updatedLockedIds;
+      });
+    }
   }
+}
+
+
 
   Future<void> loadTokenAndCart() async {
     final prefs = await SharedPreferences.getInstance();
