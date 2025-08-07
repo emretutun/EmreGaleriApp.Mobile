@@ -4,6 +4,7 @@ import 'package:emregalerimobile/pages/user/user_profile.dart';
 import 'package:emregalerimobile/pages/user/user_edit_profile.dart';
 import 'package:emregalerimobile/pages/user/user_car_list_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'login_page.dart';
 import 'admin_panel_page.dart';
@@ -38,15 +39,12 @@ class _HomePageState extends State<HomePage> {
 
   Future<String?> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('jwt_token');
-    debugPrint('DEBUG: Token alındı: $token');
-    return token;
+    return prefs.getString('jwt_token');
   }
 
   Future<void> _logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
-
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (_) => const LoginPage()),
@@ -54,65 +52,13 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-
-  void _goToUserProfile() async {
+  Future<void> _navigate(Widget page) async {
     final token = await _getToken();
     if (token == null || token.isEmpty) {
       await _logout();
       return;
     }
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => UserProfilePage(token: token),
-      ),
-    );
-  }
-
-  void _goToUserEditProfile() async {
-    final token = await _getToken();
-    if (token == null || token.isEmpty) {
-      await _logout();
-      return;
-    }
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => UserEditProfilePage(token: token),
-      ),
-    );
-  }
-
-  void _goToCarList() async {
-    final token = await _getToken();
-    if (token == null || token.isEmpty) {
-      await _logout();
-      return;
-    }
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => UserCarListPage(token: token),
-      ),
-    );
-  }
-
-  void _goToMyOrders() async {
-    final token = await _getToken();
-    if (token == null || token.isEmpty) {
-      await _logout();
-      return;
-    }
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const UserMyOrdersPage(),
-      ),
-    );
+    Navigator.push(context, MaterialPageRoute(builder: (_) => page));
   }
 
   @override
@@ -126,15 +72,11 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
-        title: const Text(
-          'Emre Galeri',
-          style: TextStyle(color: Colors.white),
-        ),
+        title: const Text('Emre Galeri', style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.indigo.shade800,
         centerTitle: true,
         elevation: 4,
         iconTheme: const IconThemeData(color: Colors.white),
-        actionsIconTheme: const IconThemeData(color: Colors.white),
         actions: [
           if (_isAdminOrYetkili)
             IconButton(
@@ -149,40 +91,35 @@ class _HomePageState extends State<HomePage> {
             ),
           PopupMenuButton<String>(
             onSelected: (value) async {
-              if (value == 'orders') {
-                _goToMyOrders();
-              } else if (value == 'profile') {
-                _goToUserProfile();
-              } else if (value == 'edit_profile') {
-                _goToUserEditProfile();
-              } else if (value == 'logout') {
-                await _logout();
+              switch (value) {
+                case 'orders':
+                  _navigate(const UserMyOrdersPage());
+                  break;
+                case 'profile':
+                  final token = await _getToken();
+                  if (token != null) {
+                    _navigate(UserProfilePage(token: token));
+                  }
+                  break;
+                case 'edit_profile':
+                  final token = await _getToken();
+                  if (token != null) {
+                    _navigate(UserEditProfilePage(token: token));
+                  }
+                  break;
+                case 'logout':
+                  _logout();
+                  break;
               }
             },
             icon: const Icon(Icons.account_circle_rounded),
             itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'orders',
-                child: Text('Siparişlerim'),
-              ),
+              const PopupMenuItem(value: 'orders', child: Text('Siparişlerim')),
               const PopupMenuDivider(),
-              const PopupMenuItem(
-                value: 'profile',
-                child: Text('Profilim'),
-              ),
-              const PopupMenuItem(
-                value: 'edit_profile',
-                child: Text('Profilimi Düzenle'),
-              ),
+              const PopupMenuItem(value: 'profile', child: Text('Profilim')),
+              const PopupMenuItem(value: 'edit_profile', child: Text('Profilimi Düzenle')),
               const PopupMenuDivider(),
-              const PopupMenuItem(
-                value: 'change_password',
-                child: Text('Şifre Değiştir'),
-              ),
-              const PopupMenuItem(
-                value: 'logout',
-                child: Text('Çıkış Yap'),
-              ),
+              const PopupMenuItem(value: 'logout', child: Text('Çıkış Yap')),
             ],
           ),
         ],
@@ -211,9 +148,8 @@ class _HomePageState extends State<HomePage> {
                   ],
                 ),
                 padding: const EdgeInsets.all(30),
-                child: const Icon(Icons.directions_car_filled_rounded,
-                    size: 90, color: Colors.white),
-              ),
+                child: const Icon(Icons.directions_car_filled_rounded, size: 90, color: Colors.white),
+              ).animate().fade(duration: 600.ms).scale(begin: const Offset(0.8, 0.8)),
               const SizedBox(height: 30),
               Text(
                 'Hoş geldin!',
@@ -223,7 +159,7 @@ class _HomePageState extends State<HomePage> {
                   color: Colors.indigo.shade900,
                   letterSpacing: 1.2,
                 ),
-              ),
+              ).animate().fade(duration: 400.ms).slideY(begin: -0.3),
               const SizedBox(height: 10),
               Text(
                 'Araç kiralama sistemine başarıyla giriş yaptınız.',
@@ -233,29 +169,21 @@ class _HomePageState extends State<HomePage> {
                   color: Colors.grey.shade700,
                   fontWeight: FontWeight.w500,
                 ),
-              ),
+              ).animate().fade(duration: 400.ms).slideY(begin: 0.3),
               const SizedBox(height: 40),
               ElevatedButton.icon(
-                onPressed: _goToCarList,
-                icon: const Icon(
-                  Icons.directions_car,
-                  color: Colors.white,
-                ),
+                onPressed: () => _navigate(UserCarListPage(token: '')), // Token boş, içinde kontrol ediliyor
+                icon: const Icon(Icons.directions_car, color: Colors.white),
                 label: const Text('Araçları Görüntüle'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.indigo.shade700,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 16),
-                  textStyle: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                   elevation: 4,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 ),
-              ),
+              ).animate().fade(duration: 500.ms).scale(begin: const Offset(0.95, 0.95)),
             ],
           ),
         ),

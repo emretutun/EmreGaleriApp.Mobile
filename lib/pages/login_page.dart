@@ -1,11 +1,11 @@
 import 'dart:convert';
-import 'package:emregalerimobile/services/api.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:emregalerimobile/services/api.dart';
 import 'home_page.dart';
 import 'register_page.dart';
-
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -17,7 +17,6 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-
   bool _isLoading = false;
   String? _errorMessage;
 
@@ -33,8 +32,6 @@ class _LoginPageState extends State<LoginPage> {
     final cleanToken = token.replaceAll('"', '');
     await prefs.setString('jwt_token', cleanToken);
     await prefs.setString('user_roles', roles.join(','));
-    debugPrint('Token kaydedildi: $cleanToken');
-    debugPrint('Roller kaydedildi: ${roles.join(',')}');
   }
 
   Future<void> _login() async {
@@ -42,9 +39,7 @@ class _LoginPageState extends State<LoginPage> {
     final password = _passwordController.text.trim();
 
     if (email.isEmpty || password.isEmpty) {
-      setState(() {
-        _errorMessage = "Email ve şifre boş bırakılamaz.";
-      });
+      setState(() => _errorMessage = "Email ve şifre boş bırakılamaz.");
       return;
     }
 
@@ -54,7 +49,7 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
-      final uri = Uri.parse('${ApiService.baseUrl}/api/auth/login'); 
+      final uri = Uri.parse('${ApiService.baseUrl}/api/auth/login');
 
       final response = await http.post(
         uri,
@@ -75,12 +70,10 @@ class _LoginPageState extends State<LoginPage> {
           const SnackBar(content: Text('Giriş başarılı!')),
         );
 
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
 
+        // ignore: use_build_context_synchronously
         Navigator.pushReplacement(
-          // ignore: use_build_context_synchronously
           context,
           MaterialPageRoute(builder: (_) => const HomePage()),
         );
@@ -95,7 +88,7 @@ class _LoginPageState extends State<LoginPage> {
           _errorMessage = mesaj;
         });
       }
-    } catch (e) {
+    } catch (_) {
       setState(() {
         _isLoading = false;
         _errorMessage = 'Sunucuya bağlanılamadı. Lütfen internet bağlantınızı kontrol edin.';
@@ -128,13 +121,13 @@ class _LoginPageState extends State<LoginPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // Logo
               Container(
                 decoration: BoxDecoration(
                   color: Colors.blue.shade50,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      // ignore: deprecated_member_use
                       color: Colors.blue.shade200.withOpacity(0.6),
                       spreadRadius: 4,
                       blurRadius: 12,
@@ -144,8 +137,11 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 padding: const EdgeInsets.all(24),
                 child: const Icon(Icons.directions_car, size: 90, color: Colors.blue),
-              ),
+              ).animate().fade(duration: 600.ms).slideY(begin: -0.3),
+
               const SizedBox(height: 20),
+
+              // Başlık
               Text(
                 'Emre Galeri Mobil',
                 style: TextStyle(
@@ -154,8 +150,11 @@ class _LoginPageState extends State<LoginPage> {
                   color: Colors.blue.shade800,
                   letterSpacing: 1.2,
                 ),
-              ),
+              ).animate().fade(duration: 600.ms).slideY(begin: -0.2),
+
               const SizedBox(height: 36),
+
+              // Email
               TextField(
                 controller: _emailController,
                 decoration: inputDecoration.copyWith(
@@ -164,8 +163,11 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 keyboardType: TextInputType.emailAddress,
                 autofillHints: const [AutofillHints.email],
-              ),
+              ).animate().fade(duration: 400.ms).slideX(begin: -0.3),
+
               const SizedBox(height: 22),
+
+              // Şifre
               TextField(
                 controller: _passwordController,
                 decoration: inputDecoration.copyWith(
@@ -174,15 +176,21 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 obscureText: true,
                 autofillHints: const [AutofillHints.password],
-              ),
+              ).animate().fade(duration: 400.ms).slideX(begin: 0.3),
+
               const SizedBox(height: 28),
+
+              // Hata mesajı
               if (_errorMessage != null)
                 Text(
                   _errorMessage!,
                   style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w600),
                   textAlign: TextAlign.center,
-                ),
+                ).animate().fade(duration: 300.ms),
+
               if (_errorMessage != null) const SizedBox(height: 18),
+
+              // Giriş butonu
               SizedBox(
                 width: double.infinity,
                 height: 52,
@@ -199,8 +207,11 @@ class _LoginPageState extends State<LoginPage> {
                       ? const CircularProgressIndicator(color: Colors.white)
                       : const Text('Giriş Yap'),
                 ),
-              ),
+              ).animate().fade(duration: 500.ms).scale(begin: const Offset(0.95, 0.95)),
+
               const SizedBox(height: 16),
+
+              // Alt linkler
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -215,11 +226,11 @@ class _LoginPageState extends State<LoginPage> {
                     child: const Text('Kayıt Ol'),
                   ),
                   TextButton(
-                onPressed: () => Navigator.pushNamed(context, '/forgot-password'),
-                child: const Text("Şifremi Unuttum?"),
-              ),
-                              ],
-              ),
+                    onPressed: () => Navigator.pushNamed(context, '/forgot-password'),
+                    child: const Text("Şifremi Unuttum?"),
+                  ),
+                ],
+              ).animate().fade(duration: 600.ms),
             ],
           ),
         ),
